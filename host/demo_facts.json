@@ -1,0 +1,127 @@
+{
+  "_comment": "Only measured or design-fixed facts for the demo dashboard (host/web/index.html). Update after each measurement; never put estimates here without saying so.",
+  "fabric_clock": "50 MHz",
+  "system": [
+    [
+      "Board",
+      "PolarFire SoC Discovery Kit (MPFS095T)"
+    ],
+    [
+      "NPU",
+      "16x16 INT8 weight-stationary systolic array, on-chip K-tile accumulator, 128 KB input replay buffer"
+    ],
+    [
+      "Fabric clock",
+      "50 MHz (FIC3 APB clock)"
+    ],
+    [
+      "Peak (theoretical)",
+      "256 MAC/clock = 12.8 GMAC/s at 50 MHz"
+    ],
+    [
+      "CPU",
+      "RISC-V U54 x4 (app + 3 workers for the CPU layers), bare metal"
+    ],
+    [
+      "Weights",
+      "FastDepth 4.03 MB, MiDaS small 16.8 MB, INT8 in DDR, sent over UART once per power-up"
+    ],
+    [
+      "Link",
+      "UART 921600 baud (phone/laptop -> board)"
+    ]
+  ],
+  "hardware": [
+    [
+      "4LUT (whole design)",
+      "51,443 / 93,516 (55.0 %)"
+    ],
+    [
+      "DFF (whole design)",
+      "44,740 / 93,516 (47.8 %)"
+    ],
+    [
+      "Math blocks",
+      "288 / 292 (256 PEs + 32 requantiser)"
+    ],
+    [
+      "LSRAM",
+      "126 / 308 (accumulator 1024 x 512 bit, X replay buffer 8192 x 128 bit, FIFOs)"
+    ],
+    [
+      "uSRAM",
+      "114 / 876"
+    ],
+    [
+      "NPU share (design minus bring-up build)",
+      "~38.7 k 4LUT, ~35.7 k DFF, 103 LSRAM, 288 math"
+    ],
+    [
+      "Timing at 50 MHz (static timing, all corners)",
+      "MET: worst setup slack +3.20 ns, no hold violations"
+    ],
+    [
+      "Fmax of the NPU clock domain (static timing)",
+      "~59 MHz (20 ns - 3.20 ns slack)"
+    ]
+  ],
+  "hardware_note": "Libero SoC 2026.1, place-and-route of 5 Oct (NPU v1.3 with the X replay buffer). The bring-up build (reference design + APB probe) used 12,744 4LUT / 9,066 DFF / 23 LSRAM / 0 math.",
+  "verification": [
+    [
+      "RTL shell + accumulator + replay sim (N=4/16, 3 depths)",
+      "ALL PASS"
+    ],
+    [
+      "Real model layers through the RTL (enc0, enc1pw, enc3pw, Canny)",
+      "bit-exact"
+    ],
+    [
+      "Injected RTL bugs caught",
+      "5 / 5"
+    ],
+    [
+      "Firmware: FastDepth 14 frames x 46 layers, MiDaS 12 frames x 136 layers, CPU + NPU-sim",
+      "bit-exact"
+    ],
+    [
+      "Independent export check (5 checks, both models)",
+      "ALL PASS"
+    ]
+  ],
+  "board_measured": [
+    [
+      "FastDepth on the board, NPU + 4 cores, 5 Oct",
+      "0.456 s / frame"
+    ],
+    [
+      "FastDepth, same frame, CPU only",
+      "3.05 s (6.7x slower)"
+    ],
+    [
+      "MiDaS small on the board, NPU + 4 cores, 5 Oct",
+      "1.99 s / frame"
+    ],
+    [
+      "MiDaS small, same frame, CPU only",
+      "15.3 s (7.7x slower)"
+    ],
+    [
+      "NPU output vs golden model (both models)",
+      "bit-identical"
+    ],
+    [
+      "SELFTEST array vs CPU",
+      "1000 / 1000"
+    ],
+    [
+      "Weight upload @ 921600 (FastDepth / MiDaS)",
+      "44 s / 183 s"
+    ]
+  ],
+  "not_measured": [
+    "power (no measurement setup)",
+    "FPGA temperature",
+    "Fmax on silicon (static timing says ~59 MHz)"
+  ],
+  "flow_note": "The conv layers (92 % of FastDepth's 180 M MACs, 98 % of MiDaS' 862 M MACs) run on the array; depthwise, upsample, bilinear, ReLU and skip-add on the CPU cores. The input replay buffer sends every input vector over APB once instead of once per 16 output channels; frame time is still limited by the APB link, not by the array (256 MACs per clock)."
+}

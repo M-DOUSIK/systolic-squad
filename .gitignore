@@ -1,0 +1,22 @@
+build/
+__pycache__/
+*.vcd
+# datasets are downloaded by the scripts in ml/data/ (large, not versioned)
+ml/data/val/
+ml/data/train_raw/
+ml/data/teacher/
+ml/data/unlabeled/*.jpg
+ml/data/unlabeled/rejected/
+ml/data/*.log
+ml/data/*.tar
+# large checkpoints only needed for training (download links in ml/teacher.py / ml/fd_common.py)
+ml/vendor/**/*.pth
+ml/vendor/**/*.pth.tar
+ml/vendor/Depth-Anything-V2/assets/
+ml/vendor/Depth-Anything-V2/metric_depth/assets/
+ml/vendor/Depth-Anything-V2/metric_depth/dataset/splits/
+# generated at run time
+host/certs/
+fw/test_runner
+fw/test_runner.exe
+ml/export_midas/vectors/

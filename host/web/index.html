@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Systolic Squad · Depth</title>
+<!-- Layout and theme from the team's UI mock (header, sidebar, two viewports, four cards, control bar). Every number is live from the
+     board / emulator or measured (host/demo_facts.json). Self-contained: no CDN, works on a phone without internet. -->
+<style>
+:root{--bg:#0b0e14;--low:#191c22;--mid:#1d2026;--hi:#272a31;--hi2:#32353c;--text:#e1e2eb;--var:#b9cac4;--out:#83948f;
+--cyan:#00f5d4;--teal:#00e3bc;--mint:#56ffd8;--sky:#7bd0ff;--mono:"JetBrains Mono",ui-monospace,Consolas,monospace;--head:"Space Grotesk",system-ui,sans-serif}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+.m{font-family:var(--mono);font-size:10px;letter-spacing:.06em}.m12{font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.out{color:var(--out)}.var{color:var(--var)}.sec{color:var(--mint)}.pri{color:var(--cyan)}
+.chip{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:2px 5px;border-radius:2px;background:var(--hi2);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);display:inline-block;flex:none}.dot.off{background:#4a4f57;box-shadow:none}
+.pulse{animation:pulse 2s infinite}@keyframes pulse{50%{opacity:.5}}
+header{position:fixed;top:0;left:0;right:0;height:64px;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 24px;
+background:rgba(25,28,34,.85);backdrop-filter:blur(40px);box-shadow:0 1px 16px rgba(0,0,0,.5)}
+.brand{display:flex;align-items:center;gap:10px}.brand .ic{width:32px;height:32px;border-radius:4px;background:var(--hi);display:grid;place-items:center;color:var(--mint);
+box-shadow:0 0 12px rgba(0,245,212,.25);font-size:18px}.brand b{font-family:var(--head);font-size:18px;font-weight:500;letter-spacing:-.02em;white-space:nowrap}
+.statusbar{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:2px;background:var(--bg)}
+.run{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:4px;background:var(--cyan);color:#006c5c;font-family:var(--head);font-size:18px;font-weight:500;
+letter-spacing:.05em;box-shadow:0 0 20px rgba(0,245,212,.35);white-space:nowrap}.run:active{transform:scale(.95)}
+.tele{display:flex;flex-direction:column;align-items:flex-end;padding:6px 8px;border-radius:4px;background:var(--bg)}
+aside{position:fixed;left:0;top:64px;bottom:0;width:256px;z-index:40;background:rgba(11,14,20,.9);backdrop-filter:blur(24px);display:flex;flex-direction:column;justify-content:space-between;padding:16px;gap:16px}
+.qr{width:100%;background:#fff;border-radius:4px;padding:8px;image-rendering:pixelated;display:block}
+.box{display:flex;flex-direction:column;gap:4px;padding:8px;border-radius:2px;background:var(--low)}
+.track{width:100%;height:4px;border-radius:12px;background:var(--hi2);overflow:hidden}.track i{display:block;height:100%;background:var(--teal)}
+.wrap{padding-left:256px}main{padding:88px 24px 24px;display:flex;flex-direction:column;gap:24px}
+.views{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.view{display:flex;flex-direction:column;background:rgba(25,28,34,.85);border-radius:8px;overflow:hidden;position:relative;box-shadow:0 20px 25px -5px rgba(0,0,0,.25)}
+.view:before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,227,188,.3),transparent)}
+.rail{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 16px;background:rgba(29,32,38,.7);flex-wrap:wrap}
+.rail b{font-family:var(--head);font-size:18px;font-weight:500;letter-spacing:-.025em}
+.stage{position:relative;aspect-ratio:4/3;background:var(--bg);overflow:hidden}.stage canvas{width:100%;height:100%;display:block}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(11,14,20,.85) 100%);pointer-events:none}
+.br{position:absolute;width:24px;height:24px;border:0 solid var(--teal);pointer-events:none;box-shadow:0 0 10px rgba(0,245,212,.6)}
+.br.a{top:12px;left:12px;border-width:2px 0 0 2px}.br.b{top:12px;right:12px;border-width:2px 2px 0 0}.br.c{bottom:44px;left:12px;border-width:0 0 2px 2px}.br.d{bottom:44px;right:12px;border-width:0 2px 2px 0}
+.cross{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border:1px solid rgba(86,255,216,.4);border-radius:50%;display:grid;place-items:center;pointer-events:none}
+.cross i{width:8px;height:8px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--cyan)}
+.ribbon{position:absolute;left:0;right:0;bottom:0;height:32px;background:rgba(11,14,20,.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;padding:0 16px;gap:8px}
+.grad{width:180px;height:8px;border-radius:12px;background:linear-gradient(90deg,#b11f04,#f1621a,#d3e535,#3ef08c,#29bbec,#4662d7)}
+.probe{position:absolute;transform:translate(-50%,-50%);display:none;flex-direction:column;align-items:center;pointer-events:none}
+.probe .ring{width:48px;height:48px;border:1px dashed var(--mint);border-radius:50%;display:grid;place-items:center;animation:spin 12s linear infinite}
+.probe .ring i{width:12px;height:12px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal)}@keyframes spin{to{transform:rotate(360deg)}}
+.probe .tip{margin-top:8px;padding:4px 8px;border-radius:2px;background:rgba(11,14,20,.95);white-space:nowrap}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{display:flex;flex-direction:column;justify-content:space-between;padding:16px;border-radius:8px;background:rgba(29,32,38,.7);backdrop-filter:blur(24px);box-shadow:0 10px 15px -3px rgba(0,0,0,.2);min-width:0}
+.card .top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.big{font-family:var(--head);font-size:32px;line-height:40px;font-weight:600;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kv{display:flex;justify-content:space-between;gap:6px;font-family:var(--mono);font-size:10px;letter-spacing:.06em}
+.bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px;border-radius:8px;background:rgba(25,28,34,.9);box-shadow:0 25px 50px -12px rgba(0,0,0,.25)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:2px;background:var(--hi);font-family:var(--mono);font-size:12px;letter-spacing:.04em}
+.btn:hover{background:#363940;color:var(--mint)}.btn.on{background:var(--teal);color:#00604e}.btn:disabled{opacity:.35;cursor:default}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--hi2);padding:10px 16px;border-radius:4px;font-family:var(--mono);font-size:12px;display:none;z-index:99;max-width:92vw}
+@media (max-width:1280px){.cards{grid-template-columns:1fr 1fr}.statusbar .hide{display:none}}
+@media (max-width:900px){aside,.statusbar,.tele{display:none}.wrap{padding-left:0}main{padding:76px 12px 12px;gap:14px}.views{grid-template-columns:1fr;gap:14px}
+header{padding:0 12px}.run{font-size:15px;padding:8px 12px}.big{font-size:24px;line-height:30px}.cards{gap:10px}.card{padding:12px}}
+@media (max-width:420px){.brand b{font-size:15px}.run .t{display:none}.big{font-size:20px}.grad{width:90px}}
+</style></head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="brand"><div class="ic">◈</div><div><div style="display:flex;align-items:center;gap:4px"><b>SYSTOLIC SQUAD</b><span class="chip sec">DEPTH</span></div>
+      <div class="m out">EDGE AI ON POLARFIRE SoC</div></div></div>
+    <div class="statusbar"><span class="dot pulse" id="hwdot"></span><span class="m" style="color:#42fdd5" id="hwtxt">CONNECTING</span><span class="m out hide">|</span><span class="m var hide" id="clk"></span></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <button class="run" id="go">▶ <span class="t">START CAMERA</span></button>
+    <div class="tele"><span class="m out">TELEMETRY</span><span class="m sec" id="teleTxt">—</span></div>
+  </div>
+</header>
+<aside>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between"><span class="m out">TRY IT ON YOUR PHONE</span><span class="m sec">SCAN</span></div>
+    <img class="qr" id="qr" alt="QR code">
+    <span class="m out" id="qrurl" style="word-break:break-all"></span>
+    <span class="m var" style="line-height:1.6">Same Wi-Fi as this laptop. Accept the certificate warning once, then tap START CAMERA.</span>
+    <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="m out">PHONES CONNECTED</span><span class="m sec" id="nphones">0</span></div>
+  </div>
+  <div class="box">
+    <div class="kv"><span class="var">FPGA FABRIC (4LUT)</span><span class="sec" id="lutTxt">—</span></div>
+    <div class="track"><i id="lutBar" style="width:0"></i></div>
+    <div class="kv" style="padding-top:4px"><span class="out">TIMING @ 50 MHz</span><span id="timTxt">—</span></div>
+    <div class="kv"><span class="out">MATH BLOCKS</span><span id="mathTxt">—</span></div>
+  </div>
+</aside>
+<div class="wrap"><main>
+<section class="views">
+  <div class="view">
+    <div class="rail"><div style="display:flex;align-items:center;gap:8px"><span class="dot pulse" id="camdot"></span><b>INPUT STREAM (RGB)</b><span class="chip sec" id="srcpill">CAMERA OFF</span></div>
+      <span class="chip var">128×96 TO BOARD</span></div>
+    <div class="stage"><canvas id="cin" width="320" height="240"></canvas><div class="vig"></div>
+      <div class="empty m12 out" id="inEmpty">tap START CAMERA</div>
+      <div class="br a"></div><div class="br b"></div><div class="br c"></div><div class="br d"></div><div class="cross"><i></i></div>
+      <div class="ribbon"><span class="m sec">RGB // CENTRE CROP 4:3</span><span class="m sec" style="font-weight:600" id="inR">—</span></div></div>
+  </div>
+  <div class="view">
+    <div class="rail"><div style="display:flex;align-items:center;gap:8px"><span class="dot off" id="depdot"></span><b>OUTPUT DEPTH MAP</b><span class="chip pri" id="engpill">NPU INT8</span></div>
+      <span class="chip var">TAP: DISTANCE</span></div>
+    <div class="stage" id="dstage"><canvas id="cdep" width="128" height="96"></canvas>
+      <div class="empty m12 out" id="depEmpty">waiting for the first depth map…</div>
+      <div class="br a" style="border-color:#d7fff3"></div><div class="br b" style="border-color:#d7fff3"></div><div class="br c" style="border-color:#d7fff3"></div><div class="br d" style="border-color:#d7fff3"></div>
+      <div class="probe" id="probe"><div class="ring"><i></i></div><div class="tip m"><span class="sec" id="pz">Z —</span> <span class="out">|</span> <span class="var" id="pxy">—</span></div></div>
+      <div class="ribbon"><span style="display:flex;align-items:center;gap:6px"><span class="m sec" id="nearTxt">NEAR</span><span class="grad"></span><span class="m" style="color:var(--sky)" id="farTxt">FAR</span></span>
+        <span class="m sec" style="font-weight:600" id="depR">—</span></div></div>
+  </div>
+</section>
+<section class="cards">
+  <div class="card"><div class="top"><span class="m out">LATENCY // DEPTH NET</span><span class="chip sec" id="latPill">—</span></div>
+    <div style="margin:4px 0"><div class="big pri" id="lat">—</div><div class="m var" id="latSub">time on the board per frame</div></div>
+    <svg viewBox="0 0 100 24" preserveAspectRatio="none" style="width:100%;height:28px"><path id="sparkF" fill="#00e3bc" fill-opacity=".12"/><path id="spark" fill="none" stroke="#00e3bc" stroke-width="2" vector-effect="non-scaling-stroke"/></svg></div>
+  <div class="card"><div class="top"><span class="m out">DEPTH RANGE</span><span class="chip" style="color:#42fdd5" id="rngChip">METRIC</span></div>
+    <div style="margin:4px 0"><div class="big" id="rng">—</div><div class="m var" id="rngSub">nearest — farthest point</div></div>
+    <div style="display:flex;flex-direction:column;gap:4px"><div class="track" style="height:8px;border-radius:2px"><i id="rngBar" style="width:0;background:linear-gradient(90deg,#00e3bc,#00f5d4,#b1e1ff)"></i></div>
+      <div class="kv out"><span>0 m</span><span class="sec" id="rngMed">MEDIAN —</span><span id="rngMax">—</span></div></div></div>
+  <div class="card"><div class="top"><span class="m out">NPU UTILIZATION</span><span class="chip sec">POLARFIRE</span></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0;gap:8px"><div style="min-width:0"><div class="big sec" id="npuPct">—</div><div class="m var" id="npuSub">frame time on the 16×16 array</div></div>
+      <div style="position:relative;width:48px;height:48px;flex:none"><svg viewBox="0 0 36 36" style="width:48px;height:48px;transform:rotate(-90deg)">
+        <path d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="#32353c" stroke-width="3.5"/>
+        <path id="gauge" d="M18 2.0845a15.9155 15.9155 0 0 1 0 31.831a15.9155 15.9155 0 0 1 0-31.831" fill="none" stroke="#00e3bc" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0,100"/></svg>
+        <span class="m sec" id="gaugeTxt" style="position:absolute;inset:0;display:grid;place-items:center;font-weight:600">—</span></div></div>
+    <div class="kv out"><span id="benchTxt">BENCH: not run</span><span class="sec" id="matchTxt"></span></div></div>
+  <div class="card"><div class="top"><span class="m out">MODEL TOPOLOGY</span><span class="chip" style="color:var(--teal)">QUANT_INT8</span></div>
+    <div style="margin:4px 0"><div id="mName" style="font-family:var(--head);font-size:18px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">FastDepth (MobileNet)</div>
+      <div class="m sec" id="thru">Throughput: —</div></div>
+    <div style="display:flex;flex-direction:column;gap:2px" id="mFacts"></div></div>
+</section>
+<section class="bar">
+  <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <button class="btn" id="pause" disabled>⏸ Pause Stream</button><button class="btn" id="flip" disabled>⟲ Switch Camera</button>
+    <button class="btn" id="watch">◉ Watch Phones</button><button class="btn" id="snap">⤓ Snapshot</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px">
+    <button class="btn" id="modelBtn">MODEL: —</button><button class="btn board" id="npuBtn">NPU: ON</button><button class="btn board" id="bench">⚡ BENCH CPU vs NPU</button><button class="btn board" id="selftest">✓ Self-test</button>
+  </div>
+</section>
+</main></div>
+<div class="toast" id="toast"></div>
+<video id="v" autoplay playsinline muted style="display:none"></video>
+<script>
+const $=id=>document.getElementById(id),set=(id,t)=>{$(id).textContent=t;};
+const cin=$('cin'),ci=cin.getContext('2d'),cdep=$('cdep'),cd=cdep.getContext('2d'),v=$('v');
+let INFO=null,facing='environment',stream=null,running=false,paused=false,watching=false,lastDepth=null,hist=[],npuOn=1,autoMax=null;
+function toast(t,ms=3500){const e=$('toast');e.textContent=t;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',ms);}
+function turbo(x){x=Math.min(1,Math.max(0,x));
+ const r=0.13572138+x*(4.61539260+x*(-42.66032258+x*(132.13108234+x*(-152.94239396+x*59.28637943))));
+ const g=0.09140261+x*(2.19418839+x*(4.84296658+x*(-14.18503333+x*(4.27729857+x*2.82956604))));
+ const b=0.10667330+x*(12.64194608+x*(-60.58204836+x*(110.36276771+x*(-89.90310912+x*27.34824973))));
+ return [r,g,b].map(c=>Math.max(0,Math.min(255,Math.round(c*255))));}
+const LUT=[...Array(256)].map((_,i)=>turbo(i/255));
+const fmt=ms=>ms==null?'—':(ms>=1000?(ms/1000).toFixed(2)+' s':Math.round(ms)+' ms');
+let autoMin=null;
+function drawDepth(b64,W,H,scale,zp,dmin,dmax,kind){const disp=kind==='disparity';const raw=atob(b64),n=raw.length,id=cd.createImageData(W,H),bytes=new Uint8Array(n);
+ // colours follow the scene: its nearest point (2nd percentile) = red, farthest (98th) = blue, smoothed over frames; never black.
+ // The tap probe still reads true metres.
+ if(dmax!=null){autoMin=autoMin==null?dmin:0.7*autoMin+0.3*dmin;autoMax=autoMax==null?dmax:0.7*autoMax+0.3*dmax;}
+ const lo=autoMin==null?0:autoMin,hi=Math.max(lo+0.3,autoMax||5);set('nearTxt',disp?'[NEAR]':lo.toFixed(1)+' m [NEAR]');set('farTxt',disp?'[FAR]':hi.toFixed(1)+' m [FAR]');
+ for(let i=0;i<n;i++){bytes[i]=raw.charCodeAt(i);let f=Math.min(1,Math.max(0,(scale*(bytes[i]-128-zp)-lo)/(hi-lo)));if(disp)f=1-f;const c=LUT[Math.round(255*(0.95-0.83*f))];
+  id.data[4*i]=c[0];id.data[4*i+1]=c[1];id.data[4*i+2]=c[2];id.data[4*i+3]=255;}
+ cdep.width=W;cdep.height=H;cd.putImageData(id,0,0);lastDepth={bytes,W,H,scale,zp,disp,lo,hi};$('depEmpty').style.display='none';$('depdot').classList.remove('off');}
+function spark(){const a=hist.slice(-30);if(a.length<2)return;const mx=Math.max(...a)*1.15||1;
+ const d=a.map((y,i)=>(i?'L':'M')+(i*100/(a.length-1)).toFixed(1)+','+(22-20*y/mx).toFixed(1)).join(' ');$('spark').setAttribute('d',d);$('sparkF').setAttribute('d',d+' L100,24 L0,24 Z');}
+async function loadInfo(){INFO=await (await fetch('/info')).json();const board=INFO.mode==='board';
+ $('qr').src=INFO.qr;set('qrurl',INFO.url);set('hwtxt',board?(INFO.npu_present?'POLARFIRE NPU ACTIVE':'POLARFIRE · CPU ONLY'):'EMULATOR (LAPTOP)');
+ $('hwdot').classList.toggle('off',!board);set('clk',board?'ARRAY 16×16 · CLK 50 MHz':'golden model, same bytes as the board');
+ document.querySelectorAll('.board').forEach(b=>b.disabled=!board);
+ const hw=Object.fromEntries(INFO.hardware),lut=(hw['4LUT (whole design)']||'').match(/\(([\d.]+) %\)/);
+ if(lut){set('lutTxt',lut[1]+' %');$('lutBar').style.width=lut[1]+'%';}
+ const tim=Object.entries(hw).find(([k])=>k.startsWith('Timing')),met=tim&&tim[1].startsWith('MET');
+ set('timTxt',met?'MET ('+((tim[1].match(/\+[\d.]+ ns/)||['?'])[0])+')':(tim?tim[1]:'—'));$('timTxt').className=met?'sec':'out';set('mathTxt',(hw['Math blocks']||'—').split(' (')[0]);
+ const macs=INFO.model.facts.find(f=>f[0]==='MACs / frame');
+ const cur=INFO.models.find(m=>m.id===INFO.model_id);set('modelBtn','⇄ MODEL: '+(cur?cur.name:'—'));
+ const onArr=INFO.model.facts.find(f=>f[0]==='On the array'),disp=INFO.kind==='disparity';set('mName',INFO.model.name);set('rngChip',disp?'RELATIVE':'METRIC');
+ $('mFacts').innerHTML=[['GEOMETRY:','128×96 (RGB)'],['MACS / FRAME:',(macs?macs[1]:'—')+' · '+(onArr?onArr[1]:'—')+' on array'],['COORDINATES:',disp?'Relative (inverse depth)':'Metric m (depth)']]
+  .map(([k,v])=>`<div class="kv var"><span class="out">${k}</span><span>${v}</span></div>`).join('');}
+function show(j,rtt){
+ if(j.error)toast(j.error);
+ if(j.depth)drawDepth(j.depth,j.w,j.h,j.scale,j.zp,j.dmin,j.dmax,j.kind);
+ if(j.cnn_ms!=null){hist.push(j.cnn_ms);if(hist.length>60)hist.shift();spark();}
+ set('lat',fmt(j.cnn_ms));set('latPill',j.where_short||'—');
+ set('latSub',j.npu_ms!=null?`array ${fmt(j.npu_ms)} · CPU layers ${fmt(j.cpu_ms)}`:(j.where_short==='EMULATOR'?'golden model on the laptop':'all layers on the CPU'));
+ if(rtt){set('teleTxt',fmt(rtt)+' // '+(1000/rtt).toFixed(1)+' FPS');set('inR',(1000/rtt).toFixed(1)+' FPS');set('thru',`Throughput: ${(1000/rtt).toFixed(1)} FPS end to end`);}
+ if(j.dmin!=null&&j.kind==='disparity'){set('rng','relative');set('rngSub','MiDaS gives relative depth (no metres)');set('rngMed','NEAR / FAR ratio: '+(j.dmax/Math.max(j.dmin,1e-3)).toFixed(1)+'×');set('rngMax','');$('rngBar').style.width='100%';}
+ else if(j.dmin!=null){set('rng',j.dmin.toFixed(1)+'m — '+j.dmax.toFixed(1)+'m');set('rngMed','MEDIAN: '+j.dmed.toFixed(2)+' m');
+  const mx=INFO?INFO.output_max_m:9;set('rngMax',mx.toFixed(1)+' m');$('rngBar').style.width=Math.min(100,100*j.dmax/mx)+'%';}
+ if(j.npu_ms!=null&&j.cnn_ms){set('npuPct',(100*j.npu_ms/j.cnn_ms).toFixed(1)+'%');set('npuSub','of the frame on the 16×16 array');
+  const busy=j.npu_cycles?100*j.npu_active/j.npu_cycles:0;$('gauge').setAttribute('stroke-dasharray',busy.toFixed(0)+',100');set('gaugeTxt',busy.toFixed(0)+'%');}
+ else{set('npuPct',j.where_short==='EMULATOR'?'n/a':'CPU');set('npuSub',j.where_short==='EMULATOR'?'emulator: no hardware':'NPU switched off');}
+ set('depR',j.frame!=null?'FRAME '+j.frame:'');set('engpill',j.npu_ms!=null?'NPU INT8':(j.where_short==='EMULATOR'?'INT8 · EMULATOR':'INT8 · CPU'));}
+async function cam(){if(stream)stream.getTracks().forEach(t=>t.stop());
+ stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:640},height:{ideal:480}},audio:false});v.srcObject=stream;await v.play();}
+function grab(){const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return false;let sw=vw,sh=vw*3/4;if(sh>vh){sh=vh;sw=vh*4/3;}
+ ci.drawImage(v,(vw-sw)/2,(vh-sh)/2,sw,sh,0,0,320,240);$('inEmpty').style.display='none';return true;}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function loop(){running=true;while(running){if(paused||watching){await sleep(150);continue;}if(!grab()){await sleep(50);continue;}
+ const blob=await new Promise(r=>cin.toBlob(r,'image/jpeg',0.85)),t0=performance.now();
+ try{const j=await (await fetch('/frame',{method:'POST',body:blob})).json();show(j,performance.now()-t0);}catch(e){toast('laptop not reachable');await sleep(1000);}}}
+async function watchLoop(){while(watching){try{const j=await (await fetch('/latest')).json();
+  if(j.rgb){const im=new Image();im.onload=()=>{ci.drawImage(im,0,0,320,240);$('inEmpty').style.display='none';};im.src=j.rgb;set('srcpill','PHONE '+j.client);}
+  if(j.frame!==undefined&&j.frame!==watchLoop.last){watchLoop.last=j.frame;show(j,j.rtt);}}catch(e){}await sleep(300);}}
+async function poll(){try{const j=await (await fetch('/clients')).json();set('nphones',j.clients.length);}catch(e){}setTimeout(poll,2000);}
+$('go').onclick=async()=>{try{await cam();watching=false;$('watch').classList.remove('on');$('go').style.display='none';$('pause').disabled=false;$('flip').disabled=false;
+ set('srcpill','LIVE · THIS DEVICE');if(!running)loop();}catch(e){toast('camera not available: '+e,6000);}};
+$('flip').onclick=async()=>{facing=facing==='environment'?'user':'environment';await cam();};
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ Resume Stream':'⏸ Pause Stream';$('pause').classList.toggle('on',paused);};
+$('watch').onclick=()=>{watching=!watching;$('watch').classList.toggle('on',watching);if(watching){set('srcpill','WATCHING PHONES');watchLoop();}};
+$('snap').onclick=()=>{const t=document.createElement('canvas');t.width=1024;t.height=384;const c=t.getContext('2d');c.drawImage(cin,0,0,512,384);c.drawImage(cdep,512,0,512,384);
+ const a=document.createElement('a');a.download='systolic_squad_depth.png';a.href=t.toDataURL();a.click();};
+async function cmd(body,label){toast(label,90000);const j=await (await fetch('/cmd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();toast(j.text||j.error||'done',6000);return j;}
+$('npuBtn').onclick=async()=>{npuOn^=1;$('npuBtn').textContent='NPU: '+(npuOn?'ON':'OFF');$('npuBtn').classList.toggle('on',!npuOn);await cmd({cmd:'npu',on:npuOn},'switching…');};
+$('selftest').onclick=()=>cmd({cmd:'selftest'},'NPU self-test…');
+// MODEL button: the board keeps both models; the first switch to a model streams its weights once (progress in /info)
+$('modelBtn').onclick=async()=>{if(!INFO)return;const other=INFO.models.find(m=>m.id!==INFO.model_id);
+ const j=await cmd({cmd:'model',name:other.id},'switching to '+other.name+'…');if(!j.switching)return;$('modelBtn').disabled=true;
+ while(true){await sleep(1000);let k;try{k=await (await fetch('/info')).json();}catch(e){continue;}
+  if(k.loading){toast(k.loading,3000);continue;}
+  await loadInfo();autoMin=autoMax=null;hist=[];$('modelBtn').disabled=false;toast('now running '+other.name,4000);break;}};
+$('bench').onclick=async()=>{const j=await cmd({cmd:'bench'},'BENCH: same frame on the CPU and on the NPU…');
+ if(j.cpu_ms!=null){set('benchTxt',`BENCH: ${(j.cpu_ms/j.npu_ms).toFixed(1)}× vs CPU (${fmt(j.cpu_ms)} → ${fmt(j.npu_ms)})`);set('matchTxt',j.match?'BIT-EXACT':'MISMATCH');}};
+function probe(ev){if(!lastDepth)return;const r=cdep.getBoundingClientRect(),p=ev.touches?ev.touches[0]:ev,fx=(p.clientX-r.left)/r.width,fy=(p.clientY-r.top)/r.height;
+ if(fx<0||fx>1||fy<0||fy>1){$('probe').style.display='none';return;}
+ const x=Math.min(lastDepth.W-1,Math.floor(fx*lastDepth.W)),y=Math.min(lastDepth.H-1,Math.floor(fy*lastDepth.H)),m=lastDepth.scale*(lastDepth.bytes[y*lastDepth.W+x]-128-lastDepth.zp),near=Math.round(100*Math.min(1,Math.max(0,(m-lastDepth.lo)/(lastDepth.hi-lastDepth.lo))));
+ const pr=$('probe');pr.style.display='flex';pr.style.left=fx*100+'%';pr.style.top=fy*100+'%';set('pz',lastDepth.disp?'NEAR: '+near+' %':'Z: '+m.toFixed(2)+'m');set('pxy','X: '+x+' Y: '+y);}
+const ds=$('dstage');ds.addEventListener('mousemove',probe);ds.addEventListener('touchstart',probe,{passive:true});ds.addEventListener('touchmove',probe,{passive:true});
+ds.addEventListener('mouseleave',()=>$('probe').style.display='none');
+loadInfo();poll();if(new URLSearchParams(location.search).has('watch'))$('watch').click();
+</script></body></html>
