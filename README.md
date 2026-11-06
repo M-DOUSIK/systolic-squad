@@ -18,6 +18,10 @@ IEEE EDS Edge AI Hackathon 2026 — FPGA track — PROC-05: 2D Systolic Array-Ba
 We designed our own AI accelerator (an **NPU**): a **16×16 systolic array** of INT8 multiply-accumulate units, built in the FPGA fabric of
 a **Microchip PolarFire SoC Discovery Kit**. The RISC-V processor on the same chip controls it and runs a real neural network on it.
 
+## My role
+
+Team project. I built the NPU hardware on my own: the 16×16 systolic array, APB3 interface, K-tile accumulator and requantiser. My teammates handled the software and the rest of the system.
+
 ## The application: depth from a single camera
 
 Point any camera — the laptop webcam or a phone — at a scene, and the board produces a **depth map**: for every pixel, how far away it is
